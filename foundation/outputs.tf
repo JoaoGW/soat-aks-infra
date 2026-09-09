@@ -23,6 +23,10 @@ output "data_resource_group_name" {
   value = data.azurerm_resource_group.data.name
 }
 
+output "auth_resource_group_name" {
+  value = data.azurerm_resource_group.auth.name
+}
+
 output "postgresql_subnet_id" {
   value = azurerm_subnet.postgresql.id
 }
