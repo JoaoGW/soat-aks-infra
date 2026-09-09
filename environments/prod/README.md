@@ -1,0 +1,5 @@
+# Produção
+
+Os arquivos Terraform de produção serão adicionados na Fase 3. Este diretório
+documenta a separação de ambientes desde o scaffold inicial.
+
