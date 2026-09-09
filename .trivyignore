@@ -1,0 +1,6 @@
+# GitHub-hosted runners precisam acessar o Key Vault por RBAC/OIDC para gravar
+# o DATABASE_URL criado pelo Terraform. A alternativa é runner privado na VNet.
+AVD-AZU-0013
+# O endpoint do AKS permanece público e autenticado por Entra RBAC para permitir
+# kubelogin em runners hospedados. Private API exige runner conectado à VNet.
+AVD-AZU-0041

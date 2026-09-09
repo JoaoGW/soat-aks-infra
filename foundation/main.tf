@@ -61,7 +61,7 @@ locals {
 resource "azurerm_virtual_network" "platform" {
   name                = "vnet-${local.name_prefix}"
   address_space       = ["10.30.0.0/16"]
-  location            = data.azurerm_resource_group.platform.location
+  location            = var.location
   resource_group_name = data.azurerm_resource_group.platform.name
 }
 
@@ -126,7 +126,7 @@ resource "azurerm_key_vault" "platform" {
   sku_name                      = "standard"
   soft_delete_retention_days    = 7
   purge_protection_enabled      = true
-  enable_rbac_authorization     = true
+  rbac_authorization_enabled    = true
   public_network_access_enabled = true
 }
 
@@ -162,6 +162,7 @@ resource "azurerm_kubernetes_cluster" "shared" {
 
   azure_active_directory_role_based_access_control {
     azure_rbac_enabled = true
+    tenant_id          = data.azurerm_client_config.current.tenant_id
   }
 
   oidc_issuer_enabled       = true
