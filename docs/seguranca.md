@@ -11,10 +11,23 @@ necessária para que a identity federada do pipeline PostgreSQL grave o segredo
 não possui acesso público. Migrar o Vault para Private Endpoint exige runner
 conectado à VNet e fica fora do crédito e escopo desta fase.
 
-## API do AKS
+## Cluster AKS
 
-O endpoint do AKS é público, mas Azure RBAC e OIDC estão habilitados e as
-contas locais estão desabilitadas. A exceção `AVD-AZU-0041` permite que
-`kubelogin` funcione em GitHub-hosted runners. O acesso ao plano de controle é
-restrito às identities de deploy e não usa kubeconfig administrativo. Uma API
-privada exigiria um runner dentro da VNet.
+O cluster habilita Azure CNI Overlay com `network_policy = "azure"`, Azure
+Policy, Azure RBAC, OIDC e Workload Identity; as contas locais estão
+desabilitadas.
+
+O endpoint do AKS é público, mas autenticado por Entra RBAC, para que
+`kubelogin` funcione em GitHub-hosted runners. Como os IPs desses runners são
+dinâmicos, a lista de IPs autorizados também não é definida; isso corresponde à
+exceção `AVD-AZU-0041`. A exceção `AVD-AZU-0065` só permanece enquanto não
+houver runner conectado à VNet. O acesso ao plano de controle é restrito às
+identities de deploy e não usa kubeconfig administrativo.
+
+## Exceções temporárias do scanner
+
+- `AVD-AZU-0040`: a instrumentação escolhida é OpenTelemetry/New Relic, prevista
+  para a Fase 6. Não há workload nesta fase que justifique também o agente OMS.
+- `AVD-AZU-0067`: os discos já usam a criptografia padrão do Azure. Uma chave
+  gerenciada pelo cliente exigiria um Disk Encryption Set adicional e fica fora
+  do escopo e do orçamento desta entrega.

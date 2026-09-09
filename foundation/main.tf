@@ -156,6 +156,7 @@ resource "azurerm_kubernetes_cluster" "shared" {
   network_profile {
     network_plugin      = "azure"
     network_plugin_mode = "overlay"
+    network_policy      = "azure"
     service_cidr        = "10.31.0.0/16"
     dns_service_ip      = "10.31.0.10"
   }
@@ -168,6 +169,7 @@ resource "azurerm_kubernetes_cluster" "shared" {
   oidc_issuer_enabled       = true
   workload_identity_enabled = true
   local_account_disabled    = true
+  azure_policy_enabled      = true
 }
 
 resource "azurerm_user_assigned_identity" "github" {
