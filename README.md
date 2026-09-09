@@ -21,3 +21,10 @@ O repositório não possui Dockerfile, pois entrega infraestrutura como código 
 não uma aplicação executável. AKS, rede, Kong, Key Vault, HPA e OIDC serão
 implementados na Fase 3 após revisão de custo do Azure.
 
+## Variáveis, arquitetura e CI
+
+Não há variáveis Terraform nem arquivos `.tfvars` nesta fase; eles serão
+adicionados na Fase 3 e permanecerão fora do Git. Consulte o
+[diagrama central](https://github.com/JoaoGW/soat-api/blob/main/docs/architecture/README.md#mapa-de-responsabilidades-dos-repositórios).
+O [workflow CI](https://github.com/JoaoGW/soat-aks-infra/actions/workflows/ci.yml)
+executa formatação e validação Terraform em `main` e `development`.
