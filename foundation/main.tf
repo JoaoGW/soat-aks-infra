@@ -178,19 +178,18 @@ resource "azurerm_user_assigned_identity" "github" {
 }
 
 resource "azurerm_federated_identity_credential" "github" {
-  for_each            = local.github_identities
-  name                = "github-${replace(each.key, "_", "-")}"
-  resource_group_name = data.azurerm_resource_group.platform.name
-  parent_id           = azurerm_user_assigned_identity.github[each.key].id
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = "https://token.actions.githubusercontent.com"
-  subject             = each.value.subject
+  for_each  = local.github_identities
+  name      = "github-${replace(each.key, "_", "-")}"
+  parent_id = azurerm_user_assigned_identity.github[each.key].id
+  audience  = ["api://AzureADTokenExchange"]
+  issuer    = "https://token.actions.githubusercontent.com"
+  subject   = each.value.subject
 }
 
 resource "azurerm_role_assignment" "github_platform" {
   for_each             = local.github_identities
   scope                = data.azurerm_resource_group.platform.id
-  role_definition_name = each.value.role
+  role_definition_name = startswith(each.key, "postgres_") ? "Reader" : each.value.role
   principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
 }
 
@@ -254,13 +253,12 @@ resource "azurerm_user_assigned_identity" "api_workload" {
 }
 
 resource "azurerm_federated_identity_credential" "api_workload" {
-  for_each            = toset(["hml", "prod"])
-  name                = "aks-api-${each.key}"
-  resource_group_name = data.azurerm_resource_group.platform.name
-  parent_id           = azurerm_user_assigned_identity.api_workload[each.key].id
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = azurerm_kubernetes_cluster.shared.oidc_issuer_url
-  subject             = "system:serviceaccount:${each.key}:soat-api"
+  for_each  = toset(["hml", "prod"])
+  name      = "aks-api-${each.key}"
+  parent_id = azurerm_user_assigned_identity.api_workload[each.key].id
+  audience  = ["api://AzureADTokenExchange"]
+  issuer    = azurerm_kubernetes_cluster.shared.oidc_issuer_url
+  subject   = "system:serviceaccount:${each.key}:soat-api"
 }
 
 resource "azurerm_role_assignment" "api_key_vault" {
