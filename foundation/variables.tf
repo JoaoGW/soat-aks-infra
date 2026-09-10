@@ -51,5 +51,5 @@ variable "state_storage_account_name" {
 variable "node_vm_size" {
   description = "SKU validado no pré-flight. Não há fallback automático."
   type        = string
-  default     = "Standard_B2s"
+  default     = "Standard_D2as_v6"
 }

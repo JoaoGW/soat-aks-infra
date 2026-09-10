@@ -226,12 +226,12 @@ resource "azurerm_user_assigned_identity" "github" {
 }
 
 resource "azurerm_federated_identity_credential" "github" {
-  for_each  = local.github_identities
-  name      = "github-${replace(each.key, "_", "-")}"
-  parent_id = azurerm_user_assigned_identity.github[each.key].id
-  audience  = ["api://AzureADTokenExchange"]
-  issuer    = "https://token.actions.githubusercontent.com"
-  subject   = each.value.subject
+  for_each                  = local.github_identities
+  name                      = "github-${replace(each.key, "_", "-")}"
+  user_assigned_identity_id = azurerm_user_assigned_identity.github[each.key].id
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = "https://token.actions.githubusercontent.com"
+  subject                   = each.value.subject
 }
 
 resource "azurerm_role_assignment" "github_platform" {
@@ -334,12 +334,12 @@ resource "azurerm_user_assigned_identity" "api_workload" {
 }
 
 resource "azurerm_federated_identity_credential" "api_workload" {
-  for_each  = toset(["hml", "prod"])
-  name      = "aks-api-${each.key}"
-  parent_id = azurerm_user_assigned_identity.api_workload[each.key].id
-  audience  = ["api://AzureADTokenExchange"]
-  issuer    = azurerm_kubernetes_cluster.shared.oidc_issuer_url
-  subject   = "system:serviceaccount:${each.key}:soat-api"
+  for_each                  = toset(["hml", "prod"])
+  name                      = "aks-api-${each.key}"
+  user_assigned_identity_id = azurerm_user_assigned_identity.api_workload[each.key].id
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = azurerm_kubernetes_cluster.shared.oidc_issuer_url
+  subject                   = "system:serviceaccount:${each.key}:soat-api"
 }
 
 resource "azurerm_role_assignment" "api_key_vault" {
@@ -356,11 +356,11 @@ resource "azurerm_user_assigned_identity" "observability_workload" {
 }
 
 resource "azurerm_federated_identity_credential" "observability_workload" {
-  name      = "aks-observability"
-  parent_id = azurerm_user_assigned_identity.observability_workload.id
-  audience  = ["api://AzureADTokenExchange"]
-  issuer    = azurerm_kubernetes_cluster.shared.oidc_issuer_url
-  subject   = "system:serviceaccount:observability:newrelic-keyvault-sync"
+  name                      = "aks-observability"
+  user_assigned_identity_id = azurerm_user_assigned_identity.observability_workload.id
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = azurerm_kubernetes_cluster.shared.oidc_issuer_url
+  subject                   = "system:serviceaccount:observability:newrelic-keyvault-sync"
 }
 
 resource "azurerm_role_assignment" "observability_key_vault" {
