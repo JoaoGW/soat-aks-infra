@@ -21,79 +21,79 @@ locals {
   github_identities = {
     aks_plan = {
       repository = "soat-aks-infra"
-      subject    = "repo:${var.github_owner}/soat-aks-infra:pull_request"
+      subject    = "repo:JoaoGW@68306736/soat-aks-infra@1362779510:pull_request"
       role       = "Reader"
       purpose    = "plan"
     }
     aks_hml = {
       repository = "soat-aks-infra"
-      subject    = "repo:${var.github_owner}/soat-aks-infra:environment:hml"
+      subject    = "repo:JoaoGW@68306736/soat-aks-infra@1362779510:environment:hml"
       role       = "Contributor"
       purpose    = "deploy"
     }
     aks_prod = {
       repository = "soat-aks-infra"
-      subject    = "repo:${var.github_owner}/soat-aks-infra:environment:prod"
+      subject    = "repo:JoaoGW@68306736/soat-aks-infra@1362779510:environment:prod"
       role       = "Contributor"
       purpose    = "deploy"
     }
     aks_observability = {
       repository = "soat-aks-infra"
-      subject    = "repo:${var.github_owner}/soat-aks-infra:environment:observability"
+      subject    = "repo:JoaoGW@68306736/soat-aks-infra@1362779510:environment:observability"
       role       = "Reader"
       purpose    = "deploy"
     }
     postgres_plan = {
       repository = "soat-postgres-infra"
-      subject    = "repo:${var.github_owner}/soat-postgres-infra:pull_request"
+      subject    = "repo:JoaoGW@68306736/soat-postgres-infra@1362779564:pull_request"
       role       = "Reader"
       purpose    = "plan"
     }
     postgres_hml = {
       repository = "soat-postgres-infra"
-      subject    = "repo:${var.github_owner}/soat-postgres-infra:environment:hml"
+      subject    = "repo:JoaoGW@68306736/soat-postgres-infra@1362779564:environment:hml"
       role       = "Contributor"
       purpose    = "deploy"
     }
     postgres_prod = {
       repository = "soat-postgres-infra"
-      subject    = "repo:${var.github_owner}/soat-postgres-infra:environment:prod"
+      subject    = "repo:JoaoGW@68306736/soat-postgres-infra@1362779564:environment:prod"
       role       = "Contributor"
       purpose    = "deploy"
     }
     auth_plan = {
       repository = "soat-auth-function"
-      subject    = "repo:${var.github_owner}/soat-auth-function:pull_request"
+      subject    = "repo:JoaoGW@68306736/soat-auth-function@1362779433:pull_request"
       role       = "Reader"
       purpose    = "plan"
     }
     auth_hml = {
       repository = "soat-auth-function"
-      subject    = "repo:${var.github_owner}/soat-auth-function:environment:hml"
+      subject    = "repo:JoaoGW@68306736/soat-auth-function@1362779433:environment:hml"
       role       = "Contributor"
       purpose    = "deploy"
     }
     auth_prod = {
       repository = "soat-auth-function"
-      subject    = "repo:${var.github_owner}/soat-auth-function:environment:prod"
+      subject    = "repo:JoaoGW@68306736/soat-auth-function@1362779433:environment:prod"
       role       = "Contributor"
       purpose    = "deploy"
     }
     api_plan = {
       repository = "soat-api"
-      subject    = "repo:${var.github_owner}/soat-api:pull_request"
+      subject    = "repo:JoaoGW@68306736/soat-api@1362779355:pull_request"
       role       = "Reader"
       purpose    = "plan"
     }
     api_hml = {
       repository = "soat-api"
-      subject    = "repo:${var.github_owner}/soat-api:environment:hml"
+      subject    = "repo:JoaoGW@68306736/soat-api@1362779355:environment:hml"
       role       = "Reader"
       purpose    = "deploy"
     }
     api_prod = {
       repository = "soat-api"
-      subject    = "repo:${var.github_owner}/soat-api:environment:prod"
+      subject    = "repo:JoaoGW@68306736/soat-api@1362779355:environment:prod"
       role       = "Reader"
       purpose    = "deploy"
     }
