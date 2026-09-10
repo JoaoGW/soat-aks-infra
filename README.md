@@ -36,8 +36,10 @@ autoscaling de um a dois nós. O Deployment, HPA e PDB da API estão em
 `soat-api/deploy`; Prometheus/Grafana pertencem à Fase 6.
 
 As identities `api_hml` e `api_prod` autenticam o workflow da API por OIDC e
-recebem Azure Kubernetes Service RBAC Cluster Admin somente no cluster. As
-identities de workload `api_workload[hml|prod]` são federadas aos
+recebem os papéis Azure Kubernetes Service Cluster User e Azure Kubernetes
+Service RBAC Cluster Admin somente no cluster. O primeiro permite obter a
+credencial do cluster; o segundo autoriza a operação Kubernetes. As identities
+de workload `api_workload[hml|prod]` são federadas aos
 ServiceAccounts de mesmo ambiente e podem apenas ler segredos do Key Vault.
 Os client IDs necessários estão no output não sigiloso
 `github_identity_client_ids` e os de workload em `api_workload_client_ids`.

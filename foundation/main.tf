@@ -309,6 +309,17 @@ resource "azurerm_role_assignment" "aks_cluster_admin" {
   principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
 }
 
+resource "azurerm_role_assignment" "api_cluster_user" {
+  for_each = {
+    for key, identity in local.github_identities : key => identity
+    if identity.purpose == "deploy" && startswith(key, "api_")
+  }
+
+  scope                = azurerm_kubernetes_cluster.shared.id
+  role_definition_name = "Azure Kubernetes Service Cluster User Role"
+  principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
+}
+
 resource "azurerm_user_assigned_identity" "api_workload" {
   for_each            = toset(["hml", "prod"])
   name                = "uami-${local.name_prefix}-api-${each.key}"
