@@ -73,6 +73,24 @@ locals {
       role       = "Contributor"
       purpose    = "deploy"
     }
+    api_plan = {
+      repository = "soat-api"
+      subject    = "repo:${var.github_owner}/soat-api:pull_request"
+      role       = "Reader"
+      purpose    = "plan"
+    }
+    api_hml = {
+      repository = "soat-api"
+      subject    = "repo:${var.github_owner}/soat-api:environment:hml"
+      role       = "Reader"
+      purpose    = "deploy"
+    }
+    api_prod = {
+      repository = "soat-api"
+      subject    = "repo:${var.github_owner}/soat-api:environment:prod"
+      role       = "Reader"
+      purpose    = "deploy"
+    }
   }
 }
 
@@ -188,6 +206,10 @@ resource "azurerm_kubernetes_cluster" "shared" {
   workload_identity_enabled = true
   local_account_disabled    = true
   azure_policy_enabled      = true
+
+  key_vault_secrets_provider {
+    secret_rotation_enabled = true
+  }
 }
 
 resource "azurerm_user_assigned_identity" "github" {
@@ -279,7 +301,7 @@ resource "azurerm_role_assignment" "auth_key_vault" {
 resource "azurerm_role_assignment" "aks_cluster_admin" {
   for_each = {
     for key, identity in local.github_identities : key => identity
-    if identity.purpose == "deploy" && startswith(key, "aks_")
+    if identity.purpose == "deploy" && (startswith(key, "aks_") || startswith(key, "api_"))
   }
 
   scope                = azurerm_kubernetes_cluster.shared.id
