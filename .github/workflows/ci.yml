@@ -18,7 +18,7 @@ jobs:
         with:
           terraform_version: '1.9.8'
       - uses: terraform-linters/setup-tflint@v4
-      - uses: aquasecurity/trivy-action@0.33.1
+      - uses: aquasecurity/trivy-action@0.36.0
         with:
           scan-type: config
           scan-ref: .
