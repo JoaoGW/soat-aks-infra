@@ -55,6 +55,42 @@ locals {
       role       = "Contributor"
       purpose    = "deploy"
     }
+    auth_plan = {
+      repository = "soat-auth-function"
+      subject    = "repo:${var.github_owner}/soat-auth-function:pull_request"
+      role       = "Reader"
+      purpose    = "plan"
+    }
+    auth_hml = {
+      repository = "soat-auth-function"
+      subject    = "repo:${var.github_owner}/soat-auth-function:environment:hml"
+      role       = "Contributor"
+      purpose    = "deploy"
+    }
+    auth_prod = {
+      repository = "soat-auth-function"
+      subject    = "repo:${var.github_owner}/soat-auth-function:environment:prod"
+      role       = "Contributor"
+      purpose    = "deploy"
+    }
+    api_plan = {
+      repository = "soat-api"
+      subject    = "repo:${var.github_owner}/soat-api:pull_request"
+      role       = "Reader"
+      purpose    = "plan"
+    }
+    api_hml = {
+      repository = "soat-api"
+      subject    = "repo:${var.github_owner}/soat-api:environment:hml"
+      role       = "Reader"
+      purpose    = "deploy"
+    }
+    api_prod = {
+      repository = "soat-api"
+      subject    = "repo:${var.github_owner}/soat-api:environment:prod"
+      role       = "Reader"
+      purpose    = "deploy"
+    }
   }
 }
 
@@ -170,6 +206,10 @@ resource "azurerm_kubernetes_cluster" "shared" {
   workload_identity_enabled = true
   local_account_disabled    = true
   azure_policy_enabled      = true
+
+  key_vault_secrets_provider {
+    secret_rotation_enabled = true
+  }
 }
 
 resource "azurerm_user_assigned_identity" "github" {
@@ -191,7 +231,7 @@ resource "azurerm_federated_identity_credential" "github" {
 resource "azurerm_role_assignment" "github_platform" {
   for_each             = local.github_identities
   scope                = data.azurerm_resource_group.platform.id
-  role_definition_name = startswith(each.key, "postgres_") ? "Reader" : each.value.role
+  role_definition_name = startswith(each.key, "postgres_") || startswith(each.key, "auth_") ? "Reader" : each.value.role
   principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
 }
 
@@ -236,14 +276,47 @@ resource "azurerm_role_assignment" "postgresql_key_vault" {
   principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
 }
 
+resource "azurerm_role_assignment" "auth_function_subnet" {
+  for_each = {
+    for key, identity in local.github_identities : key => identity
+    if identity.purpose == "deploy" && startswith(key, "auth_")
+  }
+
+  scope                = azurerm_subnet.function.id
+  role_definition_name = "Network Contributor"
+  principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
+}
+
+resource "azurerm_role_assignment" "auth_key_vault" {
+  for_each = {
+    for key, identity in local.github_identities : key => identity
+    if identity.purpose == "deploy" && startswith(key, "auth_")
+  }
+
+  scope                = azurerm_key_vault.platform.id
+  role_definition_name = "Key Vault Data Access Administrator"
+  principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
+}
+
 resource "azurerm_role_assignment" "aks_cluster_admin" {
   for_each = {
     for key, identity in local.github_identities : key => identity
-    if identity.purpose == "deploy" && startswith(key, "aks_")
+    if identity.purpose == "deploy" && (startswith(key, "aks_") || startswith(key, "api_"))
   }
 
   scope                = azurerm_kubernetes_cluster.shared.id
   role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
+  principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
+}
+
+resource "azurerm_role_assignment" "api_cluster_user" {
+  for_each = {
+    for key, identity in local.github_identities : key => identity
+    if identity.purpose == "deploy" && startswith(key, "api_")
+  }
+
+  scope                = azurerm_kubernetes_cluster.shared.id
+  role_definition_name = "Azure Kubernetes Service Cluster User Role"
   principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
 }
 
@@ -268,4 +341,18 @@ resource "azurerm_role_assignment" "api_key_vault" {
   scope                = azurerm_key_vault.platform.id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = azurerm_user_assigned_identity.api_workload[each.key].principal_id
+}
+
+resource "azurerm_user_assigned_identity" "auth_function_workload" {
+  for_each            = toset(["hml", "prod"])
+  name                = "uami-${local.name_prefix}-auth-function-${each.key}"
+  location            = data.azurerm_resource_group.platform.location
+  resource_group_name = data.azurerm_resource_group.platform.name
+}
+
+resource "azurerm_role_assignment" "auth_function_key_vault" {
+  for_each             = toset(["hml", "prod"])
+  scope                = azurerm_key_vault.platform.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.auth_function_workload[each.key].principal_id
 }

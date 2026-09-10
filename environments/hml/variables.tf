@@ -2,6 +2,12 @@ variable "state_resource_group_name" {
   type = string
 }
 
+variable "resource_name_suffix" {
+  description = "Sufixo da Function hml. Sem valor, a rota do Kong não é criada."
+  type        = string
+  default     = ""
+}
+
 variable "state_storage_account_name" {
   type = string
 }

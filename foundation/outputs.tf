@@ -31,6 +31,10 @@ output "postgresql_subnet_id" {
   value = azurerm_subnet.postgresql.id
 }
 
+output "function_subnet_id" {
+  value = azurerm_subnet.function.id
+}
+
 output "postgresql_private_dns_zone_id" {
   value = azurerm_private_dns_zone.postgresql.id
 }
@@ -56,5 +60,17 @@ output "github_identity_client_ids" {
 output "api_workload_client_ids" {
   value = {
     for environment, identity in azurerm_user_assigned_identity.api_workload : environment => identity.client_id
+  }
+}
+
+output "auth_function_workload_identity_ids" {
+  value = {
+    for environment, identity in azurerm_user_assigned_identity.auth_function_workload : environment => identity.id
+  }
+}
+
+output "auth_function_workload_client_ids" {
+  value = {
+    for environment, identity in azurerm_user_assigned_identity.auth_function_workload : environment => identity.client_id
   }
 }
