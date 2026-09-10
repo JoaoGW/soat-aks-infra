@@ -272,7 +272,7 @@ resource "azurerm_role_assignment" "auth_key_vault" {
   }
 
   scope                = azurerm_key_vault.platform.id
-  role_definition_name = "Key Vault Secrets Officer"
+  role_definition_name = "Key Vault Data Access Administrator"
   principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
 }
 
