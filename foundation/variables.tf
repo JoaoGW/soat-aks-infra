@@ -32,12 +32,6 @@ variable "resource_name_suffix" {
   }
 }
 
-variable "github_owner" {
-  description = "Proprietário dos repositórios GitHub confiados pelas credenciais federadas."
-  type        = string
-  default     = "JoaoGW"
-}
-
 variable "state_resource_group_name" {
   description = "Grupo de recursos da Storage Account de state criada na Fase 0."
   type        = string
