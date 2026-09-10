@@ -25,13 +25,22 @@ O diagrama central e as decisões arquiteturais estão em
 ## Stacks
 
 - `foundation`: VNet, subnets, DNS privado PostgreSQL, Key Vault, AKS,
-  Workload Identity e identities OIDC para os repositórios de infraestrutura.
+  Workload Identity, Secrets Store CSI e identities OIDC para infraestrutura,
+  Function e pipeline da API.
 - `environments/hml`: namespace `hml`, namespaces compartilhados `kong` e
   `observability`, além do Kong sem rotas de negócio.
 - `environments/prod`: namespace `prod` no mesmo cluster.
 
-O AKS usa Azure CNI Overlay, Azure RBAC, OIDC e autoscaling de um a dois nós.
-HPA, PDB e o Deployment da API pertencem à Fase 5; Prometheus/Grafana à Fase 6.
+O AKS usa Azure CNI Overlay, Azure RBAC, OIDC, Secrets Store CSI e
+autoscaling de um a dois nós. O Deployment, HPA e PDB da API estão em
+`soat-api/deploy`; Prometheus/Grafana pertencem à Fase 6.
+
+As identities `api_hml` e `api_prod` autenticam o workflow da API por OIDC e
+recebem Azure Kubernetes Service RBAC Cluster Admin somente no cluster. As
+identities de workload `api_workload[hml|prod]` são federadas aos
+ServiceAccounts de mesmo ambiente e podem apenas ler segredos do Key Vault.
+Os client IDs necessários estão no output não sigiloso
+`github_identity_client_ids` e os de workload em `api_workload_client_ids`.
 
 ## Pré-requisitos e bootstrap
 
