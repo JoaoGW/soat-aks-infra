@@ -332,7 +332,7 @@ resource "azurerm_role_assignment" "api_cluster_user" {
 
 resource "azurerm_user_assigned_identity" "api_workload" {
   for_each            = toset(["hml", "prod"])
-  name                = "uami-${local.name_prefix}-api-${each.key}"
+  name                = "uami-${local.name_prefix}-api-workload-${each.key}"
   location            = data.azurerm_resource_group.platform.location
   resource_group_name = data.azurerm_resource_group.platform.name
 }
