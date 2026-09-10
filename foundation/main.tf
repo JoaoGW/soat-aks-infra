@@ -248,11 +248,22 @@ resource "azurerm_role_assignment" "github_platform" {
 resource "azurerm_role_assignment" "github_data" {
   for_each = {
     for key, identity in local.github_identities : key => identity
-    if startswith(key, "postgres_")
+    if startswith(key, "postgres_") || identity.purpose == "plan"
   }
 
   scope                = data.azurerm_resource_group.data.id
-  role_definition_name = each.value.role
+  role_definition_name = startswith(each.key, "postgres_") ? each.value.role : "Reader"
+  principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
+}
+
+resource "azurerm_role_assignment" "github_auth" {
+  for_each = {
+    for key, identity in local.github_identities : key => identity
+    if startswith(key, "auth_") || identity.purpose == "plan"
+  }
+
+  scope                = data.azurerm_resource_group.auth.id
+  role_definition_name = startswith(each.key, "auth_") ? each.value.role : "Reader"
   principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
 }
 
@@ -328,6 +339,12 @@ resource "azurerm_role_assignment" "api_cluster_user" {
   scope                = azurerm_kubernetes_cluster.shared.id
   role_definition_name = "Azure Kubernetes Service Cluster User Role"
   principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
+}
+
+resource "azurerm_role_assignment" "aks_plan_cluster_user" {
+  scope                = azurerm_kubernetes_cluster.shared.id
+  role_definition_name = "Azure Kubernetes Service Cluster User Role"
+  principal_id         = azurerm_user_assigned_identity.github["aks_plan"].principal_id
 }
 
 resource "azurerm_user_assigned_identity" "api_workload" {
