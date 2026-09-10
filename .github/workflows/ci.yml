@@ -16,6 +16,7 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.9.8'
+          terraform_wrapper: false
       - uses: terraform-linters/setup-tflint@v4
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -69,6 +70,7 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.9.8'
+          terraform_wrapper: false
       - name: Informar bootstrap pendente
         if: vars.AZURE_CLIENT_ID_PLAN == ''
         run: echo 'Plano remoto aguardando bootstrap OIDC da foundation.'
