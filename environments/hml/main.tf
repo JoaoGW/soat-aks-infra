@@ -55,6 +55,8 @@ module "namespace" {
 }
 
 resource "kubernetes_manifest" "correlation_id" {
+  count = var.kong_crds_ready ? 1 : 0
+
   manifest = {
     apiVersion = "configuration.konghq.com/v1"
     kind       = "KongClusterPlugin"
@@ -78,7 +80,7 @@ locals {
 }
 
 resource "kubernetes_manifest" "auth_cpf_rate_limit" {
-  count = var.resource_name_suffix == "" ? 0 : 1
+  count = var.resource_name_suffix == "" || !var.kong_crds_ready ? 0 : 1
 
   manifest = {
     apiVersion = "configuration.konghq.com/v1"

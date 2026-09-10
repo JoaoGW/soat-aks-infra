@@ -21,6 +21,12 @@ variable "kong_chart_version" {
   default = "2.53.0"
 }
 
+variable "kong_crds_ready" {
+  description = "Habilita plugins Kong depois que o primeiro deploy do chart registrar seus CRDs no cluster."
+  type        = bool
+  default     = false
+}
+
 variable "aks_server_application_id" {
   description = "ID público do servidor Microsoft Entra usado pelo kubelogin para AKS."
   type        = string

@@ -347,6 +347,12 @@ resource "azurerm_role_assignment" "aks_plan_cluster_user" {
   principal_id         = azurerm_user_assigned_identity.github["aks_plan"].principal_id
 }
 
+resource "azurerm_role_assignment" "aks_plan_cluster_reader" {
+  scope                = azurerm_kubernetes_cluster.shared.id
+  role_definition_name = "Azure Kubernetes Service RBAC Reader"
+  principal_id         = azurerm_user_assigned_identity.github["aks_plan"].principal_id
+}
+
 resource "azurerm_user_assigned_identity" "api_workload" {
   for_each            = toset(["hml", "prod"])
   name                = "uami-${local.name_prefix}-api-workload-${each.key}"
