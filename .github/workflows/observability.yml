@@ -1,0 +1,43 @@
+name: Observabilidade AKS
+
+on:
+  workflow_dispatch:
+    inputs:
+      acao:
+        description: Ação permitida
+        required: true
+        type: choice
+        options: [plan, apply]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  observability:
+    runs-on: ubuntu-latest
+    environment: observability
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.9.8'
+      - uses: azure/login@v2
+        if: vars.AZURE_CLIENT_ID != ''
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Planejar observabilidade
+        if: vars.AZURE_CLIENT_ID != ''
+        run: |
+          terraform -chdir=environments/observability init -input=false \
+            -backend-config="resource_group_name=${{ vars.TF_STATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ vars.TF_STATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ vars.TF_STATE_AKS_CONTAINER }}" \
+            -backend-config="key=observability.tfstate" \
+            -backend-config="use_azuread_auth=true"
+          terraform -chdir=environments/observability plan -input=false -out=observability.tfplan
+      - name: Aplicar após aprovação de custo
+        if: inputs.acao == 'apply' && vars.TF_APPLY_ENABLED == 'true' && vars.AZURE_CLIENT_ID != ''
+        run: terraform -chdir=environments/observability apply -input=false -auto-approve observability.tfplan

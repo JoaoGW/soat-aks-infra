@@ -37,6 +37,12 @@ locals {
       role       = "Contributor"
       purpose    = "deploy"
     }
+    aks_observability = {
+      repository = "soat-aks-infra"
+      subject    = "repo:${var.github_owner}/soat-aks-infra:environment:observability"
+      role       = "Reader"
+      purpose    = "deploy"
+    }
     postgres_plan = {
       repository = "soat-postgres-infra"
       subject    = "repo:${var.github_owner}/soat-postgres-infra:pull_request"
@@ -341,6 +347,26 @@ resource "azurerm_role_assignment" "api_key_vault" {
   scope                = azurerm_key_vault.platform.id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = azurerm_user_assigned_identity.api_workload[each.key].principal_id
+}
+
+resource "azurerm_user_assigned_identity" "observability_workload" {
+  name                = "uami-${local.name_prefix}-observability"
+  location            = data.azurerm_resource_group.platform.location
+  resource_group_name = data.azurerm_resource_group.platform.name
+}
+
+resource "azurerm_federated_identity_credential" "observability_workload" {
+  name      = "aks-observability"
+  parent_id = azurerm_user_assigned_identity.observability_workload.id
+  audience  = ["api://AzureADTokenExchange"]
+  issuer    = azurerm_kubernetes_cluster.shared.oidc_issuer_url
+  subject   = "system:serviceaccount:observability:newrelic-keyvault-sync"
+}
+
+resource "azurerm_role_assignment" "observability_key_vault" {
+  scope                = azurerm_key_vault.platform.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.observability_workload.principal_id
 }
 
 resource "azurerm_user_assigned_identity" "auth_function_workload" {
