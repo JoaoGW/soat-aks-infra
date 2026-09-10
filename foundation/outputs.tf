@@ -15,6 +15,10 @@ output "aks_oidc_issuer_url" {
   value = azurerm_kubernetes_cluster.shared.oidc_issuer_url
 }
 
+output "tenant_id" {
+  value = data.azurerm_client_config.current.tenant_id
+}
+
 output "platform_resource_group_name" {
   value = data.azurerm_resource_group.platform.name
 }
@@ -61,6 +65,10 @@ output "api_workload_client_ids" {
   value = {
     for environment, identity in azurerm_user_assigned_identity.api_workload : environment => identity.client_id
   }
+}
+
+output "observability_workload_client_id" {
+  value = azurerm_user_assigned_identity.observability_workload.client_id
 }
 
 output "auth_function_workload_identity_ids" {

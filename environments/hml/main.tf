@@ -54,6 +54,25 @@ module "namespace" {
   kong_chart_version       = var.kong_chart_version
 }
 
+resource "kubernetes_manifest" "correlation_id" {
+  manifest = {
+    apiVersion = "configuration.konghq.com/v1"
+    kind       = "KongClusterPlugin"
+    metadata = {
+      name        = "correlation-id"
+      labels      = { global = "true" }
+      annotations = { "kubernetes.io/ingress.class" = "kong" }
+    }
+    plugin = "correlation-id"
+    config = {
+      header_name     = "X-Correlation-ID"
+      generator       = "uuid#counter"
+      echo_downstream = true
+    }
+  }
+  depends_on = [module.namespace]
+}
+
 locals {
   auth_function_hostname = "func-soat-auth-hml-${var.resource_name_suffix}.azurewebsites.net"
 }
