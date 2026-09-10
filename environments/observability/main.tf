@@ -41,6 +41,8 @@ resource "kubernetes_service_account_v1" "keyvault_sync" {
 }
 
 resource "kubernetes_manifest" "newrelic_license" {
+  count = var.secrets_store_crds_ready ? 1 : 0
+
   manifest = {
     apiVersion = "secrets-store.csi.x-k8s.io/v1"
     kind       = "SecretProviderClass"
