@@ -80,6 +80,10 @@ jobs:
           client-id: ${{ vars.AZURE_CLIENT_ID_PLAN }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - uses: azure/use-kubelogin@v1
+        if: vars.AZURE_CLIENT_ID_PLAN != ''
+        with:
+          kubelogin-version: v0.1.4
       - name: Executar plano somente leitura
         if: vars.AZURE_CLIENT_ID_PLAN != ''
         run: |
