@@ -53,3 +53,94 @@ module "namespace" {
   install_kong             = true
   kong_chart_version       = var.kong_chart_version
 }
+
+locals {
+  auth_function_hostname = "func-soat-auth-hml-${var.resource_name_suffix}.azurewebsites.net"
+}
+
+resource "kubernetes_manifest" "auth_cpf_rate_limit" {
+  count = var.resource_name_suffix == "" ? 0 : 1
+
+  manifest = {
+    apiVersion = "configuration.konghq.com/v1"
+    kind       = "KongPlugin"
+    metadata = {
+      name      = "auth-cpf-rate-limit"
+      namespace = "kong"
+    }
+    plugin = "rate-limiting"
+    config = {
+      limit_by = "ip"
+      minute   = 5
+      policy   = "local"
+    }
+  }
+
+  depends_on = [module.namespace]
+}
+
+resource "kubernetes_service_v1" "auth_function" {
+  count = var.resource_name_suffix == "" ? 0 : 1
+
+  metadata {
+    name      = "soat-auth-function"
+    namespace = "kong"
+    annotations = {
+      "konghq.com/protocol" = "https"
+    }
+  }
+
+  spec {
+    type          = "ExternalName"
+    external_name = local.auth_function_hostname
+
+    port {
+      name        = "https"
+      port        = 443
+      target_port = 443
+    }
+  }
+
+  depends_on = [module.namespace]
+}
+
+resource "kubernetes_ingress_v1" "auth_cpf" {
+  count = var.resource_name_suffix == "" ? 0 : 1
+
+  metadata {
+    name      = "auth-cpf"
+    namespace = "kong"
+    annotations = {
+      "konghq.com/plugins"    = "auth-cpf-rate-limit"
+      "konghq.com/strip-path" = "false"
+    }
+  }
+
+  spec {
+    ingress_class_name = "kong"
+
+    rule {
+      http {
+        path {
+          path      = "/auth/cpf"
+          path_type = "Exact"
+
+          backend {
+            service {
+              name = kubernetes_service_v1.auth_function[0].metadata[0].name
+
+              port {
+                name = "https"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [
+    kubernetes_manifest.auth_cpf_rate_limit,
+    kubernetes_service_v1.auth_function,
+  ]
+}
