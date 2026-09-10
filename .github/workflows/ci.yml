@@ -24,7 +24,7 @@ jobs:
           scan-ref: .
           severity: CRITICAL
           exit-code: '1'
-          ignorefiles: .trivyignore
+          trivyignores: .trivyignore
       - run: terraform fmt -check -recursive
       - name: Validar todos os stacks sem backend
         run: |
