@@ -16,6 +16,7 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.9.8'
+          terraform_wrapper: false
       - uses: terraform-linters/setup-tflint@v4
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -56,6 +57,10 @@ jobs:
           - directory: environments/observability
             state_key: observability.tfstate
     env:
+      ARM_USE_OIDC: true
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID_PLAN }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       TF_VAR_state_resource_group_name: ${{ vars.TF_STATE_RESOURCE_GROUP }}
       TF_VAR_state_storage_account_name: ${{ vars.TF_STATE_STORAGE_ACCOUNT }}
       TF_VAR_resource_name_suffix: ${{ vars.RESOURCE_NAME_SUFFIX }}
@@ -65,6 +70,7 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.9.8'
+          terraform_wrapper: false
       - name: Informar bootstrap pendente
         if: vars.AZURE_CLIENT_ID_PLAN == ''
         run: echo 'Plano remoto aguardando bootstrap OIDC da foundation.'
@@ -74,6 +80,10 @@ jobs:
           client-id: ${{ vars.AZURE_CLIENT_ID_PLAN }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - uses: azure/use-kubelogin@v1
+        if: vars.AZURE_CLIENT_ID_PLAN != ''
+        with:
+          kubelogin-version: v0.1.4
       - name: Executar plano somente leitura
         if: vars.AZURE_CLIENT_ID_PLAN != ''
         run: |

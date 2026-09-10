@@ -21,79 +21,79 @@ locals {
   github_identities = {
     aks_plan = {
       repository = "soat-aks-infra"
-      subject    = "repo:${var.github_owner}/soat-aks-infra:pull_request"
+      subject    = "repo:JoaoGW@68306736/soat-aks-infra@1362779510:pull_request"
       role       = "Reader"
       purpose    = "plan"
     }
     aks_hml = {
       repository = "soat-aks-infra"
-      subject    = "repo:${var.github_owner}/soat-aks-infra:environment:hml"
+      subject    = "repo:JoaoGW@68306736/soat-aks-infra@1362779510:environment:hml"
       role       = "Contributor"
       purpose    = "deploy"
     }
     aks_prod = {
       repository = "soat-aks-infra"
-      subject    = "repo:${var.github_owner}/soat-aks-infra:environment:prod"
+      subject    = "repo:JoaoGW@68306736/soat-aks-infra@1362779510:environment:prod"
       role       = "Contributor"
       purpose    = "deploy"
     }
     aks_observability = {
       repository = "soat-aks-infra"
-      subject    = "repo:${var.github_owner}/soat-aks-infra:environment:observability"
+      subject    = "repo:JoaoGW@68306736/soat-aks-infra@1362779510:environment:observability"
       role       = "Reader"
       purpose    = "deploy"
     }
     postgres_plan = {
       repository = "soat-postgres-infra"
-      subject    = "repo:${var.github_owner}/soat-postgres-infra:pull_request"
+      subject    = "repo:JoaoGW@68306736/soat-postgres-infra@1362779564:pull_request"
       role       = "Reader"
       purpose    = "plan"
     }
     postgres_hml = {
       repository = "soat-postgres-infra"
-      subject    = "repo:${var.github_owner}/soat-postgres-infra:environment:hml"
+      subject    = "repo:JoaoGW@68306736/soat-postgres-infra@1362779564:environment:hml"
       role       = "Contributor"
       purpose    = "deploy"
     }
     postgres_prod = {
       repository = "soat-postgres-infra"
-      subject    = "repo:${var.github_owner}/soat-postgres-infra:environment:prod"
+      subject    = "repo:JoaoGW@68306736/soat-postgres-infra@1362779564:environment:prod"
       role       = "Contributor"
       purpose    = "deploy"
     }
     auth_plan = {
       repository = "soat-auth-function"
-      subject    = "repo:${var.github_owner}/soat-auth-function:pull_request"
+      subject    = "repo:JoaoGW@68306736/soat-auth-function@1362779433:pull_request"
       role       = "Reader"
       purpose    = "plan"
     }
     auth_hml = {
       repository = "soat-auth-function"
-      subject    = "repo:${var.github_owner}/soat-auth-function:environment:hml"
+      subject    = "repo:JoaoGW@68306736/soat-auth-function@1362779433:environment:hml"
       role       = "Contributor"
       purpose    = "deploy"
     }
     auth_prod = {
       repository = "soat-auth-function"
-      subject    = "repo:${var.github_owner}/soat-auth-function:environment:prod"
+      subject    = "repo:JoaoGW@68306736/soat-auth-function@1362779433:environment:prod"
       role       = "Contributor"
       purpose    = "deploy"
     }
     api_plan = {
       repository = "soat-api"
-      subject    = "repo:${var.github_owner}/soat-api:pull_request"
+      subject    = "repo:JoaoGW@68306736/soat-api@1362779355:pull_request"
       role       = "Reader"
       purpose    = "plan"
     }
     api_hml = {
       repository = "soat-api"
-      subject    = "repo:${var.github_owner}/soat-api:environment:hml"
+      subject    = "repo:JoaoGW@68306736/soat-api@1362779355:environment:hml"
       role       = "Reader"
       purpose    = "deploy"
     }
     api_prod = {
       repository = "soat-api"
-      subject    = "repo:${var.github_owner}/soat-api:environment:prod"
+      subject    = "repo:JoaoGW@68306736/soat-api@1362779355:environment:prod"
       role       = "Reader"
       purpose    = "deploy"
     }
@@ -216,6 +216,10 @@ resource "azurerm_kubernetes_cluster" "shared" {
   key_vault_secrets_provider {
     secret_rotation_enabled = true
   }
+
+  lifecycle {
+    ignore_changes = [default_node_pool[0].upgrade_settings]
+  }
 }
 
 resource "azurerm_user_assigned_identity" "github" {
@@ -226,12 +230,12 @@ resource "azurerm_user_assigned_identity" "github" {
 }
 
 resource "azurerm_federated_identity_credential" "github" {
-  for_each  = local.github_identities
-  name      = "github-${replace(each.key, "_", "-")}"
-  parent_id = azurerm_user_assigned_identity.github[each.key].id
-  audience  = ["api://AzureADTokenExchange"]
-  issuer    = "https://token.actions.githubusercontent.com"
-  subject   = each.value.subject
+  for_each                  = local.github_identities
+  name                      = "github-${replace(each.key, "_", "-")}"
+  user_assigned_identity_id = azurerm_user_assigned_identity.github[each.key].id
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = "https://token.actions.githubusercontent.com"
+  subject                   = each.value.subject
 }
 
 resource "azurerm_role_assignment" "github_platform" {
@@ -244,11 +248,22 @@ resource "azurerm_role_assignment" "github_platform" {
 resource "azurerm_role_assignment" "github_data" {
   for_each = {
     for key, identity in local.github_identities : key => identity
-    if startswith(key, "postgres_")
+    if startswith(key, "postgres_") || identity.purpose == "plan"
   }
 
   scope                = data.azurerm_resource_group.data.id
-  role_definition_name = each.value.role
+  role_definition_name = startswith(each.key, "postgres_") ? each.value.role : "Reader"
+  principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
+}
+
+resource "azurerm_role_assignment" "github_auth" {
+  for_each = {
+    for key, identity in local.github_identities : key => identity
+    if startswith(key, "auth_") || identity.purpose == "plan"
+  }
+
+  scope                = data.azurerm_resource_group.auth.id
+  role_definition_name = startswith(each.key, "auth_") ? each.value.role : "Reader"
   principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
 }
 
@@ -326,20 +341,32 @@ resource "azurerm_role_assignment" "api_cluster_user" {
   principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
 }
 
+resource "azurerm_role_assignment" "aks_plan_cluster_user" {
+  scope                = azurerm_kubernetes_cluster.shared.id
+  role_definition_name = "Azure Kubernetes Service Cluster User Role"
+  principal_id         = azurerm_user_assigned_identity.github["aks_plan"].principal_id
+}
+
+resource "azurerm_role_assignment" "aks_plan_cluster_reader" {
+  scope                = azurerm_kubernetes_cluster.shared.id
+  role_definition_name = "Azure Kubernetes Service RBAC Reader"
+  principal_id         = azurerm_user_assigned_identity.github["aks_plan"].principal_id
+}
+
 resource "azurerm_user_assigned_identity" "api_workload" {
   for_each            = toset(["hml", "prod"])
-  name                = "uami-${local.name_prefix}-api-${each.key}"
+  name                = "uami-${local.name_prefix}-api-workload-${each.key}"
   location            = data.azurerm_resource_group.platform.location
   resource_group_name = data.azurerm_resource_group.platform.name
 }
 
 resource "azurerm_federated_identity_credential" "api_workload" {
-  for_each  = toset(["hml", "prod"])
-  name      = "aks-api-${each.key}"
-  parent_id = azurerm_user_assigned_identity.api_workload[each.key].id
-  audience  = ["api://AzureADTokenExchange"]
-  issuer    = azurerm_kubernetes_cluster.shared.oidc_issuer_url
-  subject   = "system:serviceaccount:${each.key}:soat-api"
+  for_each                  = toset(["hml", "prod"])
+  name                      = "aks-api-${each.key}"
+  user_assigned_identity_id = azurerm_user_assigned_identity.api_workload[each.key].id
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = azurerm_kubernetes_cluster.shared.oidc_issuer_url
+  subject                   = "system:serviceaccount:${each.key}:soat-api"
 }
 
 resource "azurerm_role_assignment" "api_key_vault" {
@@ -356,11 +383,11 @@ resource "azurerm_user_assigned_identity" "observability_workload" {
 }
 
 resource "azurerm_federated_identity_credential" "observability_workload" {
-  name      = "aks-observability"
-  parent_id = azurerm_user_assigned_identity.observability_workload.id
-  audience  = ["api://AzureADTokenExchange"]
-  issuer    = azurerm_kubernetes_cluster.shared.oidc_issuer_url
-  subject   = "system:serviceaccount:observability:newrelic-keyvault-sync"
+  name                      = "aks-observability"
+  user_assigned_identity_id = azurerm_user_assigned_identity.observability_workload.id
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = azurerm_kubernetes_cluster.shared.oidc_issuer_url
+  subject                   = "system:serviceaccount:observability:newrelic-keyvault-sync"
 }
 
 resource "azurerm_role_assignment" "observability_key_vault" {

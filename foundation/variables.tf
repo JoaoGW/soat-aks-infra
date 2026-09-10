@@ -32,12 +32,6 @@ variable "resource_name_suffix" {
   }
 }
 
-variable "github_owner" {
-  description = "Proprietário dos repositórios GitHub confiados pelas credenciais federadas."
-  type        = string
-  default     = "JoaoGW"
-}
-
 variable "state_resource_group_name" {
   description = "Grupo de recursos da Storage Account de state criada na Fase 0."
   type        = string
@@ -51,5 +45,5 @@ variable "state_storage_account_name" {
 variable "node_vm_size" {
   description = "SKU validado no pré-flight. Não há fallback automático."
   type        = string
-  default     = "Standard_B2s"
+  default     = "Standard_D2as_v6"
 }

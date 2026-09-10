@@ -3,7 +3,7 @@ output "aks_name" {
 }
 
 output "aks_host" {
-  value = azurerm_kubernetes_cluster.shared.kube_config[0].host
+  value = nonsensitive(azurerm_kubernetes_cluster.shared.kube_config[0].host)
 }
 
 output "aks_cluster_ca_certificate" {
