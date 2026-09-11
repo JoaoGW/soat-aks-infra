@@ -93,10 +93,16 @@ jobs:
             -backend-config="container_name=${{ vars.TF_STATE_AKS_CONTAINER }}" \
             -backend-config="key=${{ matrix.state_key }}" \
             -backend-config="use_azuread_auth=true"
-          if [[ '${{ matrix.directory }}' == environments/* ]]; then
-            # A identity de PR possui somente leitura no AKS e não pode listar Secrets.
-            # O Helm consulta Secrets durante o refresh; o estado remoto continua sendo
-            # comparado sem ampliar a permissão da identidade de plano.
+          if [[ '${{ matrix.directory }}' == 'environments/hml' ]]; then
+            # A identidade de PR possui somente leitura no AKS e não pode listar Secrets.
+            # O Helm consulta Secrets e os manifests consultam CRDs durante o refresh.
+            # O plano de PR valida os namespaces sem ampliar a permissão da identidade;
+            # o deploy protegido reconcilia chart e CRDs com sua identidade própria.
+            terraform -chdir='${{ matrix.directory }}' plan -input=false -lock=false -refresh=false \
+              -target=module.namespace.kubernetes_namespace_v1.application \
+              -target='module.namespace.kubernetes_namespace_v1.kong[0]' \
+              -target='module.namespace.kubernetes_namespace_v1.observability[0]'
+          elif [[ '${{ matrix.directory }}' == environments/* ]]; then
             terraform -chdir='${{ matrix.directory }}' plan -input=false -lock=false -refresh=false
           else
             terraform -chdir='${{ matrix.directory }}' plan -input=false -lock=false
