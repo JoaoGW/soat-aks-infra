@@ -50,5 +50,5 @@ module "namespace" {
   source             = "../../modules/namespace"
   namespace          = "prod"
   install_kong       = false
-  kong_chart_version = "2.53.0"
+  kong_chart_version = "3.4.1"
 }
