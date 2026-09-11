@@ -49,6 +49,12 @@ jobs:
             -backend-config="key=hml.tfstate" \
             -backend-config="use_azuread_auth=true"
           terraform -chdir=environments/hml apply -input=false -auto-approve -var='kong_crds_ready=false'
+          az aks get-credentials \
+            --resource-group rg-soat-platform \
+            --name "aks-soat-${TF_VAR_resource_name_suffix}" \
+            --format exec \
+            --overwrite-existing
+          kubelogin convert-kubeconfig -l azurecli
           kubectl wait --for=condition=Established crd/kongclusterplugins.configuration.konghq.com --timeout=180s
           terraform -chdir=environments/hml apply -input=false -auto-approve -var='kong_crds_ready=true'
 
