@@ -323,7 +323,7 @@ resource "azurerm_role_assignment" "auth_key_vault" {
 resource "azurerm_role_assignment" "aks_cluster_admin" {
   for_each = {
     for key, identity in local.github_identities : key => identity
-    if identity.purpose == "deploy" && (startswith(key, "aks_") || startswith(key, "api_"))
+    if identity.purpose == "deploy" && (key == "aks_hml" || startswith(key, "api_"))
   }
 
   scope                = azurerm_kubernetes_cluster.shared.id
