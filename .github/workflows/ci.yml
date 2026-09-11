@@ -93,4 +93,11 @@ jobs:
             -backend-config="container_name=${{ vars.TF_STATE_AKS_CONTAINER }}" \
             -backend-config="key=${{ matrix.state_key }}" \
             -backend-config="use_azuread_auth=true"
-          terraform -chdir='${{ matrix.directory }}' plan -input=false -lock=false
+          if [[ '${{ matrix.directory }}' == environments/* ]]; then
+            # A identity de PR possui somente leitura no AKS e não pode listar Secrets.
+            # O Helm consulta Secrets durante o refresh; o estado remoto continua sendo
+            # comparado sem ampliar a permissão da identidade de plano.
+            terraform -chdir='${{ matrix.directory }}' plan -input=false -lock=false -refresh=false
+          else
+            terraform -chdir='${{ matrix.directory }}' plan -input=false -lock=false
+          fi
