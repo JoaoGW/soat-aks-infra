@@ -18,7 +18,7 @@ variable "aks_state_container_name" {
 
 variable "kong_chart_version" {
   type    = string
-  default = "2.53.0"
+  default = "3.4.1"
 }
 
 variable "kong_crds_ready" {
