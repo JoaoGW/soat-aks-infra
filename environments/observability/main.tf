@@ -75,9 +75,9 @@ resource "kubernetes_deployment_v1" "keyvault_sync" {
       spec {
         service_account_name = kubernetes_service_account_v1.keyvault_sync.metadata[0].name
         container {
-          name    = "sync"
-          image   = "mcr.microsoft.com/oss/busybox/busybox:1.36.1"
-          command = ["sh", "-c", "sleep 365d"]
+          # Mantém o volume CSI montado para a rotação da chave sincronizada.
+          name  = "sync"
+          image = "registry.k8s.io/pause:3.10"
           volume_mount {
             name       = "secrets"
             mount_path = "/mnt/secrets-store"
