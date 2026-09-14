@@ -1,0 +1,13 @@
+# GitHub-hosted runners precisam acessar o Key Vault por RBAC/OIDC para gravar
+# o DATABASE_URL criado pelo Terraform. A alternativa é runner privado na VNet.
+AVD-AZU-0013
+# A telemetria de aplicações será instalada na Fase 6 com OpenTelemetry/New Relic.
+# Não será criado um segundo agente de logs nesta fase, antes de haver workloads.
+AVD-AZU-0040
+# O endpoint do AKS permanece público e autenticado por Entra RBAC para permitir
+# kubelogin em runners hospedados. Private API exige runner conectado à VNet.
+AVD-AZU-0041
+AVD-AZU-0065
+# Os discos do AKS continuam criptografados pelo Azure. Chave gerenciada pelo
+# cliente exige um Disk Encryption Set adicional, fora do custo e escopo atuais.
+AVD-AZU-0067

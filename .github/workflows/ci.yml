@@ -4,7 +4,6 @@ on:
   push:
     branches: [main, development]
   pull_request:
-    branches: [main, development]
 
 permissions:
   contents: read
@@ -17,6 +16,94 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.9.8'
+          terraform_wrapper: false
+      - uses: terraform-linters/setup-tflint@v4
+      - uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: CRITICAL
+          exit-code: '1'
+          trivyignores: .trivyignore
       - run: terraform fmt -check -recursive
-      - run: terraform init -backend=false
-      - run: terraform validate
+      - name: Validar todos os stacks sem backend
+        run: |
+          for directory in foundation environments/hml environments/prod environments/observability; do
+            terraform -chdir="$directory" init -backend=false -input=false
+            terraform -chdir="$directory" validate
+          done
+      - name: Executar TFLint
+        run: |
+          tflint --init
+          tflint --recursive
+
+  plan:
+    needs: validate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - directory: foundation
+            state_key: foundation.tfstate
+          - directory: environments/hml
+            state_key: hml.tfstate
+          - directory: environments/prod
+            state_key: prod.tfstate
+          - directory: environments/observability
+            state_key: observability.tfstate
+    env:
+      ARM_USE_OIDC: true
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID_PLAN }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_state_resource_group_name: ${{ vars.TF_STATE_RESOURCE_GROUP }}
+      TF_VAR_state_storage_account_name: ${{ vars.TF_STATE_STORAGE_ACCOUNT }}
+      TF_VAR_resource_name_suffix: ${{ vars.RESOURCE_NAME_SUFFIX }}
+      TF_VAR_aks_state_container_name: ${{ vars.TF_STATE_AKS_CONTAINER }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.9.8'
+          terraform_wrapper: false
+      - name: Informar bootstrap pendente
+        if: vars.AZURE_CLIENT_ID_PLAN == ''
+        run: echo 'Plano remoto aguardando bootstrap OIDC da foundation.'
+      - uses: azure/login@v2
+        if: vars.AZURE_CLIENT_ID_PLAN != ''
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID_PLAN }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - uses: azure/use-kubelogin@v1
+        if: vars.AZURE_CLIENT_ID_PLAN != ''
+        with:
+          kubelogin-version: v0.1.4
+      - name: Executar plano somente leitura
+        if: vars.AZURE_CLIENT_ID_PLAN != ''
+        run: |
+          terraform -chdir='${{ matrix.directory }}' init -input=false \
+            -backend-config="resource_group_name=${{ vars.TF_STATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ vars.TF_STATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ vars.TF_STATE_AKS_CONTAINER }}" \
+            -backend-config="key=${{ matrix.state_key }}" \
+            -backend-config="use_azuread_auth=true"
+          if [[ '${{ matrix.directory }}' == 'environments/hml' ]]; then
+            # A identidade de PR possui somente leitura no AKS e não pode listar Secrets.
+            # O Helm consulta Secrets e os manifests consultam CRDs durante o refresh.
+            # O plano de PR valida os namespaces sem ampliar a permissão da identidade;
+            # o deploy protegido reconcilia chart e CRDs com sua identidade própria.
+            terraform -chdir='${{ matrix.directory }}' plan -input=false -lock=false -refresh=false \
+              -target=module.namespace.kubernetes_namespace_v1.application \
+              -target='module.namespace.kubernetes_namespace_v1.kong[0]' \
+              -target='module.namespace.kubernetes_namespace_v1.observability[0]'
+          elif [[ '${{ matrix.directory }}' == environments/* ]]; then
+            terraform -chdir='${{ matrix.directory }}' plan -input=false -lock=false -refresh=false
+          else
+            terraform -chdir='${{ matrix.directory }}' plan -input=false -lock=false
+          fi

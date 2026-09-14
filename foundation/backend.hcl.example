@@ -1,0 +1,6 @@
+# Copie para .backend.hcl e preencha com os identificadores já criados na Fase 0.
+resource_group_name  = "rg-do-state"
+storage_account_name = "contadestate"
+container_name       = "tfstate-aks"
+key                  = "foundation.tfstate"
+use_azuread_auth     = true
