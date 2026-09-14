@@ -7,7 +7,7 @@ on:
         description: Ação permitida
         required: true
         type: choice
-        options: [plan, apply]
+        options: [plan, apply, diagnostico]
 
 permissions:
   contents: read
@@ -41,6 +41,14 @@ jobs:
         if: vars.AZURE_CLIENT_ID != ''
         with:
           kubelogin-version: v0.1.4
+      - name: Autenticar no cluster AKS
+        if: vars.AZURE_CLIENT_ID != ''
+        run: |
+          az aks get-credentials \
+            --resource-group '${{ vars.TF_STATE_RESOURCE_GROUP }}' \
+            --name 'aks-soat-${{ vars.RESOURCE_NAME_SUFFIX }}' \
+            --overwrite-existing
+          kubelogin convert-kubeconfig -l azurecli
       - name: Planejar observabilidade
         if: vars.AZURE_CLIENT_ID != ''
         run: |
@@ -56,3 +64,10 @@ jobs:
         run: |
           terraform -chdir=environments/observability apply -input=false -auto-approve observability.tfplan
           kubectl -n observability rollout status deployment/newrelic-keyvault-sync --timeout=180s
+      - name: Diagnosticar observabilidade
+        if: inputs.acao == 'diagnostico' && vars.AZURE_CLIENT_ID != ''
+        run: |
+          kubectl -n observability get deployment,pods --show-labels
+          kubectl -n observability get events --sort-by=.lastTimestamp
+          kubectl -n observability describe deployment newrelic-keyvault-sync
+          kubectl -n observability describe pods -l app=newrelic-keyvault-sync
