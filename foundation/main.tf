@@ -320,6 +320,12 @@ resource "azurerm_role_assignment" "auth_key_vault" {
   principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
 }
 
+resource "azurerm_role_assignment" "auth_hml_key_vault_secrets" {
+  scope                = azurerm_key_vault.platform.id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = azurerm_user_assigned_identity.github["auth_hml"].principal_id
+}
+
 resource "azurerm_role_assignment" "aks_cluster_admin" {
   for_each = {
     for key, identity in local.github_identities : key => identity
