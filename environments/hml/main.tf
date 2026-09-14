@@ -107,8 +107,9 @@ resource "kubernetes_service_v1" "auth_function" {
     name      = "soat-auth-function"
     namespace = "kong"
     annotations = {
-      "konghq.com/protocol"    = "https"
-      "konghq.com/host-header" = local.auth_function_hostname
+      "ingress.kubernetes.io/service-upstream" = "true"
+      "konghq.com/protocol"                    = "https"
+      "konghq.com/host-header"                 = local.auth_function_hostname
     }
   }
 
