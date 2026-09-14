@@ -107,7 +107,8 @@ resource "kubernetes_service_v1" "auth_function" {
     name      = "soat-auth-function"
     namespace = "kong"
     annotations = {
-      "konghq.com/protocol" = "https"
+      "konghq.com/protocol"    = "https"
+      "konghq.com/host-header" = local.auth_function_hostname
     }
   }
 
@@ -132,8 +133,9 @@ resource "kubernetes_ingress_v1" "auth_cpf" {
     name      = "auth-cpf"
     namespace = "kong"
     annotations = {
-      "konghq.com/plugins"    = "auth-cpf-rate-limit"
-      "konghq.com/strip-path" = "false"
+      "konghq.com/plugins"       = "auth-cpf-rate-limit"
+      "konghq.com/preserve-host" = "false"
+      "konghq.com/strip-path"    = "false"
     }
   }
 
