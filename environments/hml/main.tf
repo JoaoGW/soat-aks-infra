@@ -117,9 +117,7 @@ resource "kubernetes_service_v1" "auth_function" {
     external_name = local.auth_function_hostname
 
     port {
-      name        = "https"
-      port        = 443
-      target_port = 443
+      port = 443
     }
   }
 
@@ -153,7 +151,7 @@ resource "kubernetes_ingress_v1" "auth_cpf" {
               name = kubernetes_service_v1.auth_function[0].metadata[0].name
 
               port {
-                name = "https"
+                number = 443
               }
             }
           }
