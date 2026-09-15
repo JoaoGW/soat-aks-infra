@@ -28,12 +28,14 @@ O diagrama central e as decisões arquiteturais estão em
   Workload Identity, Secrets Store CSI e identities OIDC para infraestrutura,
   Function e pipeline da API.
 - `environments/hml`: namespace `hml`, namespaces compartilhados `kong` e
-  `observability`, além do Kong sem rotas de negócio.
+  `observability`, Kong e os recursos compartilhados da rota HML.
 - `environments/prod`: namespace `prod` no mesmo cluster.
 
 O AKS usa Azure CNI Overlay, Azure RBAC, OIDC, Secrets Store CSI e
-autoscaling de um a dois nós. O Deployment, HPA e PDB da API estão em
-`soat-api/deploy`; Prometheus/Grafana pertencem à Fase 6.
+autoscaling de um a dois nós. O cluster implantado usa `Standard_D2as_v6`.
+O Deployment HML da API, Kong e o coletor `nr-k8s-otel-collector` estão ativos;
+HPA/PDB e duas réplicas pertencem ao Deployment produtivo. Não são usados
+Prometheus, Grafana ou Azure Monitor nesta arquitetura.
 
 As identities `api_hml` e `api_prod` autenticam o workflow da API por OIDC e
 recebem os papéis Azure Kubernetes Service Cluster User e Azure Kubernetes
@@ -50,7 +52,7 @@ Os client IDs necessários estão no output não sigiloso
 - Terraform 1.9.8, kubelogin, TFLint e Trivy;
 - grupos `rg-soat-platform`, `rg-soat-data` e `rg-soat-auth`, além da Storage
   Account privada de state criados na Fase 0;
-- SKU `Standard_B2s`, quota e crédito validados em Brazil South.
+- SKU implantado `Standard_D2as_v6`, quota e crédito validados em Brazil South.
 
 O primeiro `apply` da `foundation` é feito localmente com login interativo para
 criar as identities OIDC que quebram o ciclo inicial do CI. Copie os arquivos
@@ -95,4 +97,6 @@ trivy config --ignorefile .trivyignore --severity CRITICAL .
 ```
 
 Este repositório não possui Dockerfile: entrega infraestrutura como código,
-não uma aplicação executável.
+não uma aplicação executável. Swagger e Postman não se aplicam a Terraform;
+consulte o [Swagger HML](http://20.226.244.207/docs) e a
+[coleção central](https://github.com/JoaoGW/soat-api/blob/main/docs/postman/oficina-api.postman_collection.json).
