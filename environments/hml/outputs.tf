@@ -11,5 +11,6 @@ output "fase4_messaging" {
     namespace_fqdn = module.fase4_messaging[0].namespace_fqdn
     client_ids     = module.fase4_messaging[0].workload_client_ids
     principal_ids  = module.fase4_messaging[0].workload_principal_ids
+    subscriptions  = module.fase4_messaging[0].subscriptions
   } : null
 }

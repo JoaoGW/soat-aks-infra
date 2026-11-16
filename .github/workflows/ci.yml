@@ -71,21 +71,24 @@ jobs:
         with:
           terraform_version: '1.9.8'
           terraform_wrapper: false
-      - name: Informar bootstrap pendente
-        if: vars.AZURE_CLIENT_ID_PLAN == ''
-        run: echo 'Plano remoto aguardando bootstrap OIDC da foundation.'
+      - name: Informar plano remoto desligado
+        if: vars.TF_APPLY_ENABLED != 'true' || vars.AZURE_CLIENT_ID_PLAN == ''
+        run: |
+          # Sem assinatura Azure ativa (trava de custo fechada) ou sem bootstrap OIDC,
+          # o plano remoto não roda; fmt, validate, TFLint e Trivy continuam no job validate.
+          echo '::notice::Plano remoto desligado pela trava de custo (TF_APPLY_ENABLED != true) ou bootstrap OIDC pendente.'
       - uses: azure/login@v2
-        if: vars.AZURE_CLIENT_ID_PLAN != ''
+        if: vars.TF_APPLY_ENABLED == 'true' && vars.AZURE_CLIENT_ID_PLAN != ''
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID_PLAN }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       - uses: azure/use-kubelogin@v1
-        if: vars.AZURE_CLIENT_ID_PLAN != ''
+        if: vars.TF_APPLY_ENABLED == 'true' && vars.AZURE_CLIENT_ID_PLAN != ''
         with:
           kubelogin-version: v0.1.4
       - name: Executar plano somente leitura
-        if: vars.AZURE_CLIENT_ID_PLAN != ''
+        if: vars.TF_APPLY_ENABLED == 'true' && vars.AZURE_CLIENT_ID_PLAN != ''
         run: |
           terraform -chdir='${{ matrix.directory }}' init -input=false \
             -backend-config="resource_group_name=${{ vars.TF_STATE_RESOURCE_GROUP }}" \
