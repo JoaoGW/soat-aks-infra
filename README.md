@@ -46,6 +46,39 @@ ServiceAccounts de mesmo ambiente e podem apenas ler segredos do Key Vault.
 Os client IDs necessários estão no output não sigiloso
 `github_identity_client_ids` e os de workload em `api_workload_client_ids`.
 
+## Fase 4: mensageria e identidades dos microsserviços
+
+O módulo `modules/fase4-messaging` (ativado por `fase4_messaging_enabled=true`
+em `environments/hml`) cria o Azure Service Bus usado pela Saga orquestrada:
+
+| Recurso | Uso | Quem envia | Quem recebe |
+| --- | --- | --- | --- |
+| Fila `billing.commands` | Comandos da Saga para o Billing | OS | Billing |
+| Fila `execution.commands` | Comandos da Saga para o Execution | OS | Execution |
+| Tópico `soat.domain.events` | Eventos de domínio assinados | OS, Billing, Execution | — |
+| Subscription `os.saga-events` | Eventos consumidos pelo orquestrador | — | OS |
+| Subscription `billing.evidence` | Provas `execution.work-cancelled.v1` e `execution.work-failed.v1` exigidas para reembolso/cancelamento de cobrança | — | Billing |
+
+Cada serviço tem uma identidade gerenciada federada ao ServiceAccount do seu
+Deployment no namespace `hml` (`soat-api`, `soat-billing-service` e
+`soat-execution-service`; o OS seleciona a identidade de mensageria por
+`SERVICE_BUS_CLIENT_ID`, porque a mesma ServiceAccount também usa a identidade
+do Key Vault) e recebe apenas os papéis
+`Azure Service Bus Data Sender/Receiver` das entidades da tabela; não há chave
+compartilhada (`local_auth_enabled=false`). Os bancos ficam em
+`soat-postgres-infra` (OS e Billing) e em `soat-execution-service/infra`
+(Cosmos DB do Execution).
+
+### Ambiente Kubernetes em uso
+
+A assinatura Azure da entrega está desativada e os workflows de apply ficam
+atrás da trava de custo (`TF_APPLY_ENABLED`): sem ela o deploy não tenta login
+no Azure e termina verde com o aviso no resumo do job. Enquanto o AKS estiver
+desligado, o ambiente Kubernetes verificável é o cluster kind criado pelo CI
+de cada serviço (`Deploy Kubernetes (kind)`) e pelo workflow
+`Fluxo completo em Kubernetes` do `soat-api`, que sobe os três serviços, seus
+bancos e o emulador do Service Bus com a mesma topologia desta tabela.
+
 ## Pré-requisitos e bootstrap
 
 - Azure CLI autenticado na assinatura Free Account correta;
@@ -88,7 +121,7 @@ O workflow de destroy exige a palavra `DESTRUIR` e
 
 ```bash
 terraform fmt -check -recursive
-for stack in foundation environments/hml environments/prod; do
+for stack in foundation environments/hml environments/prod modules/fase4-messaging; do
   terraform -chdir="$stack" init -backend=false -input=false
   terraform -chdir="$stack" validate
 done
