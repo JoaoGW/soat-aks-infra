@@ -20,18 +20,23 @@ jobs:
       ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
     steps:
       - uses: actions/checkout@v4
+      - name: Trava de custo
+        if: vars.TF_APPLY_ENABLED != 'true' || vars.AZURE_CLIENT_ID == ''
+        run: |
+          echo '::notice::Apply bloqueado pela trava de custo (TF_APPLY_ENABLED != true ou sem identidade OIDC). Nenhum login no Azure foi tentado.'
+          echo '### Apply bloqueado pela trava de custo' >> "$GITHUB_STEP_SUMMARY"
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.9.8'
           terraform_wrapper: false
       - uses: azure/login@v2
-        if: vars.AZURE_CLIENT_ID != ''
+        if: vars.TF_APPLY_ENABLED == 'true' && vars.AZURE_CLIENT_ID != ''
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       - uses: azure/use-kubelogin@v1
-        if: vars.AZURE_CLIENT_ID != ''
+        if: vars.TF_APPLY_ENABLED == 'true' && vars.AZURE_CLIENT_ID != ''
         with:
           kubelogin-version: v0.1.4
       - name: Aplicar homologação após aprovação de custo
@@ -69,18 +74,23 @@ jobs:
       ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
     steps:
       - uses: actions/checkout@v4
+      - name: Trava de custo
+        if: vars.TF_APPLY_ENABLED != 'true' || vars.AZURE_CLIENT_ID == ''
+        run: |
+          echo '::notice::Apply bloqueado pela trava de custo (TF_APPLY_ENABLED != true ou sem identidade OIDC). Nenhum login no Azure foi tentado.'
+          echo '### Apply bloqueado pela trava de custo' >> "$GITHUB_STEP_SUMMARY"
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.9.8'
           terraform_wrapper: false
       - uses: azure/login@v2
-        if: vars.AZURE_CLIENT_ID != ''
+        if: vars.TF_APPLY_ENABLED == 'true' && vars.AZURE_CLIENT_ID != ''
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       - uses: azure/use-kubelogin@v1
-        if: vars.AZURE_CLIENT_ID != ''
+        if: vars.TF_APPLY_ENABLED == 'true' && vars.AZURE_CLIENT_ID != ''
         with:
           kubelogin-version: v0.1.4
       - name: Aplicar produção após aprovação de custo
