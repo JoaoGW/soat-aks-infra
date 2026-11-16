@@ -54,6 +54,17 @@ module "namespace" {
   kong_chart_version       = var.kong_chart_version
 }
 
+# A ativação é explícita após revisão de custos, conectividade e permissões.
+module "fase4_messaging" {
+  count               = var.fase4_messaging_enabled ? 1 : 0
+  source              = "../../modules/fase4-messaging"
+  namespace_name      = var.fase4_servicebus_namespace_name
+  resource_group_name = data.terraform_remote_state.foundation.outputs.platform_resource_group_name
+  location            = var.fase4_location
+  name_suffix         = var.resource_name_suffix
+  aks_oidc_issuer_url = data.terraform_remote_state.foundation.outputs.aks_oidc_issuer_url
+}
+
 resource "kubernetes_manifest" "correlation_id" {
   count = var.kong_crds_ready ? 1 : 0
 

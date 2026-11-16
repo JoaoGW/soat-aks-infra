@@ -32,3 +32,18 @@ variable "aks_server_application_id" {
   type        = string
   default     = "6dae42f8-4368-4678-94ff-3960e28e3630"
 }
+
+variable "fase4_messaging_enabled" {
+  type    = bool
+  default = false
+}
+
+variable "fase4_servicebus_namespace_name" {
+  type    = string
+  default = ""
+}
+
+variable "fase4_location" {
+  type    = string
+  default = "brazilsouth"
+}

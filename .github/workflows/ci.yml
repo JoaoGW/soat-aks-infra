@@ -102,6 +102,13 @@ jobs:
               -target=module.namespace.kubernetes_namespace_v1.application \
               -target='module.namespace.kubernetes_namespace_v1.kong[0]' \
               -target='module.namespace.kubernetes_namespace_v1.observability[0]'
+          elif [[ '${{ matrix.directory }}' == 'environments/observability' ]]; then
+            # O papel Azure Kubernetes Service RBAC Reader não enumera CRDs de
+            # escopo de cluster. O deploy protegido reconcilia o
+            # SecretProviderClass; o check mantém o plano somente leitura do
+            # ServiceAccount que ancora a workload identity.
+            terraform -chdir='${{ matrix.directory }}' plan -input=false -lock=false -refresh=false \
+              -target=kubernetes_service_account_v1.keyvault_sync
           elif [[ '${{ matrix.directory }}' == environments/* ]]; then
             terraform -chdir='${{ matrix.directory }}' plan -input=false -lock=false -refresh=false
           else
